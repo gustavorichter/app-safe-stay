@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeStay</title>
+  <meta name="description" content="SafeStay detects hidden cameras and analyzes network security in hotels." />
+  <style>
+    :root {
+      --bg:       #181814;
+      --card:     #222220;
+      --border:   #2e2e28;
+      --gold:     #c8b85a;
+      --gold-dim: #a89840;
+      --orange:   #f5a623;
+      --text:     #e8e8e0;
+      --muted:    #888878;
+      --radius:   14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 6%;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(24,24,20,.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .nav-logo svg { width: 28px; height: 28px; }
+    .nav-right { display: flex; align-items: center; gap: 14px; }
+    .lang-switcher { display: flex; gap: 6px; }
+    .lang-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .lang-btn:hover, .lang-btn.active { border-color: var(--gold); color: var(--gold); }
+    nav a.cta-nav {
+      background: var(--gold);
+      color: #111;
+      font-weight: 700;
+      font-size: .85rem;
+      padding: 8px 18px;
+      border-radius: 50px;
+      transition: background .2s;
+    }
+    nav a.cta-nav:hover { background: var(--gold-dim); }
+
+    /* HERO */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 48px;
+      padding: 80px 6% 64px;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(200,184,90,.12);
+      border: 1px solid rgba(200,184,90,.25);
+      color: var(--gold);
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 50px;
+      margin-bottom: 20px;
+    }
+    .hero h1 { font-size: clamp(2rem, 4vw, 2.9rem); font-weight: 800; line-height: 1.18; margin-bottom: 18px; }
+    .hero h1 span { color: var(--gold); }
+    .hero p { color: var(--muted); font-size: 1.05rem; max-width: 440px; margin-bottom: 32px; }
+    .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gold);
+      color: #111;
+      font-weight: 700;
+      font-size: .95rem;
+      padding: 13px 26px;
+      border-radius: 50px;
+      transition: background .2s, transform .15s;
+    }
+    .btn-primary:hover { background: var(--gold-dim); transform: translateY(-1px); }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: .95rem;
+      padding: 13px 26px;
+      border-radius: 50px;
+      transition: border-color .2s;
+    }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* PHONE MOCKUP */
+    .phone-wrap { display: flex; justify-content: center; }
+    .phone {
+      width: 230px;
+      background: #111;
+      border-radius: 38px;
+      border: 2px solid #333;
+      padding: 16px 12px;
+      box-shadow: 0 40px 80px rgba(0,0,0,.6), 0 0 0 1px #222;
+    }
+    .phone-notch { width: 80px; height: 8px; background: #222; border-radius: 4px; margin: 0 auto 14px; }
+    .phone-screen {
+      background: #1c1c18;
+      border-radius: 20px;
+      padding: 14px 12px;
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .ps-header { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: .75rem; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+    .ps-card { background: #252520; border-radius: 12px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+    .ps-icon { width: 48px; height: 48px; margin-bottom: 4px; }
+    .ps-card h3 { font-size: .72rem; font-weight: 700; }
+    .ps-card p  { font-size: .62rem; color: var(--muted); }
+    .ps-scan-btn { background: var(--gold); color: #111; font-size: .65rem; font-weight: 700; border-radius: 50px; padding: 6px 18px; margin-top: 4px; }
+    .ps-result { background: #252520; border-radius: 10px; padding: 10px; font-size: .6rem; }
+    .ps-result-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .ps-badge { background: rgba(245,166,35,.15); color: var(--orange); border: 1px solid rgba(245,166,35,.3); border-radius: 50px; padding: 2px 7px; font-size: .55rem; font-weight: 600; }
+    .ps-ip { font-weight: 700; font-size: .65rem; }
+    .ps-ports { display: inline-block; background: #333; border-radius: 4px; padding: 1px 6px; font-size: .55rem; margin-top: 3px; }
+    .ps-findings { margin-top: 4px; }
+    .ps-findings li { list-style: none; font-size: .56rem; color: var(--muted); padding: 1px 0; }
+    .ps-findings li::before { content: "▶ "; color: var(--gold); }
+
+    /* FEATURES */
+    .section { padding: 72px 6%; max-width: 1080px; margin: 0 auto; }
+    .section-label { text-align: center; color: var(--gold); font-size: .78rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 12px; }
+    .section h2 { text-align: center; font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; margin-bottom: 8px; }
+    .section-sub { text-align: center; color: var(--muted); margin-bottom: 48px; max-width: 520px; margin-left: auto; margin-right: auto; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 26px 22px;
+      transition: border-color .2s, transform .2s;
+    }
+    .feature-card:hover { border-color: var(--gold-dim); transform: translateY(-2px); }
+    .feature-icon { width: 44px; height: 44px; background: rgba(200,184,90,.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+    .feature-icon svg { width: 22px; height: 22px; }
+    .feature-card h3 { font-size: .95rem; font-weight: 700; margin-bottom: 6px; }
+    .feature-card p  { font-size: .85rem; color: var(--muted); }
+
+    /* HOW IT WORKS */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 32px; }
+    .step { text-align: center; }
+    .step-num { width: 42px; height: 42px; border-radius: 50%; background: rgba(200,184,90,.12); border: 1px solid rgba(200,184,90,.3); color: var(--gold); font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+    .step h3 { font-size: .95rem; font-weight: 700; margin-bottom: 6px; }
+    .step p  { font-size: .85rem; color: var(--muted); }
+
+    /* BANNER CTA */
+    .banner {
+      margin: 0 auto 72px;
+      max-width: 960px;
+      padding: 0 6%;
+    }
+    .banner-inner {
+      background: linear-gradient(135deg, #222218 0%, #1a1a14 100%);
+      border: 1px solid rgba(200,184,90,.2);
+      border-radius: 20px;
+      padding: 56px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .banner-inner::before {
+      content: "";
+      position: absolute;
+      top: -60px; left: 50%;
+      transform: translateX(-50%);
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(200,184,90,.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .banner-inner h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 800; margin-bottom: 12px; }
+    .banner-inner p  { color: var(--muted); margin-bottom: 28px; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 28px 6%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: .82rem; color: var(--muted); }
+    .footer-logo { color: var(--gold); font-weight: 700; font-size: .95rem; }
+    footer a { color: var(--muted); transition: color .2s; }
+    footer a:hover { color: var(--gold); }
+
+    /* RESPONSIVE */
+    @media (max-width: 700px) {
+      .hero { grid-template-columns: 1fr; text-align: center; gap: 40px; }
+      .hero p { margin-left: auto; margin-right: auto; }
+      .hero-actions { justify-content: center; }
+      .phone-wrap { order: -1; }
+      .phone { width: 190px; }
+      .phone-screen { min-height: 320px; }
+      .banner-inner { padding: 40px 24px; }
+      footer { justify-content: center; text-align: center; }
+      .nav-right { gap: 8px; }
+      .lang-switcher { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <svg viewBox="0 0 28 28" fill="none">
+      <path d="M14 2L4 6v8c0 5.5 4.3 10.7 10 12 5.7-1.3 10-6.5 10-12V6L14 2z" fill="rgba(200,184,90,.15)" stroke="#c8b85a" stroke-width="1.5"/>
+      <circle cx="14" cy="14" r="4" stroke="#c8b85a" stroke-width="1.5"/>
+      <circle cx="14" cy="14" r="1.5" fill="#c8b85a"/>
+    </svg>
+    SafeStay
+  </div>
+  <div class="nav-right">
+    <div class="lang-switcher">
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('pt')">PT</button>
+      <button class="lang-btn" onclick="setLang('es')">ES</button>
+    </div>
+    <a href="https://play.google.com/store/apps/details?id=com.grichter.safestay&pcampaignid=web_share" class="cta-nav" data-i18n="nav_cta">Download</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div>
+    <div class="hero-eyebrow">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="#c8b85a" stroke-width="1.2"/><circle cx="6" cy="6" r="2" fill="#c8b85a"/></svg>
+      <span data-i18n="hero_eyebrow">Security in accommodations</span>
+    </div>
+    <h1 data-i18n-html="hero_h1">Detect <span>hidden cameras</span> before you relax</h1>
+    <p data-i18n="hero_p">SafeStay scans the Wi-Fi network, magnetic sensors, and Bluetooth to identify suspicious devices in hotels and short-term rentals.</p>
+    <div class="hero-actions">
+      <a href="https://play.google.com/store/apps/details?id=com.grichter.safestay&pcampaignid=web_share" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.76c.37.2.8.22 1.18.04L16.72 12 4.36.2C3.98.02 3.55.04 3.18.24 2.47.65 2 1.44 2 2.37v19.26c0 .93.47 1.72 1.18 2.13z"/><path d="M20.06 10.26l-2.54-1.46-3.17 3.2 3.17 3.2 2.57-1.48c.73-.42 1.18-1.15 1.18-1.95 0-.8-.46-1.54-1.21-1.51z" opacity=".8"/><path d="M4.36 23.8l11.3-11.3-3.17-3.2L4.36.2v23.6z" opacity=".6"/></svg>
+        <span data-i18n="btn_play">Google Play</span>
+      </a>
+      <a href="README.md" class="btn-ghost" data-i18n="btn_privacy">Privacy Policy</a>
+    </div>
+  </div>
+
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="ps-header">
+          <svg width="14" height="14" viewBox="0 0 28 28" fill="none"><path d="M14 2L4 6v8c0 5.5 4.3 10.7 10 12 5.7-1.3 10-6.5 10-12V6L14 2z" stroke="#c8b85a" stroke-width="1.5" fill="rgba(200,184,90,.1)"/></svg>
+          SafeStay
+        </div>
+        <div class="ps-card">
+          <svg class="ps-icon" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="20" stroke="#c8b85a" stroke-width="1.5" stroke-dasharray="4 3" opacity=".4"/>
+            <circle cx="24" cy="24" r="13" stroke="#c8b85a" stroke-width="1.5" opacity=".6"/>
+            <circle cx="24" cy="24" r="6"  stroke="#c8b85a" stroke-width="1.5"/>
+            <circle cx="24" cy="24" r="2.5" fill="#c8b85a"/>
+            <line x1="30" y1="18" x2="36" y2="12" stroke="#c8b85a" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="38" cy="10" r="3" fill="#c8b85a" opacity=".7"/>
+          </svg>
+          <h3>Network Scanner</h3>
+          <p style="font-size:.6rem;color:#888">Find cameras on the network</p>
+          <div class="ps-scan-btn">▶ Start Scan</div>
+        </div>
+        <div class="ps-result">
+          <div class="ps-result-row">
+            <span style="color:#888;font-size:.58rem" data-i18n="mock_stats">1 suspicious · 8 total</span>
+          </div>
+          <div style="background:#1c1c18;border-radius:8px;padding:8px;">
+            <div class="ps-result-row">
+              <div style="display:flex;align-items:center;gap:5px;">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#f5a623" stroke-width="1.2"/><text x="7" y="10.5" text-anchor="middle" font-size="7" fill="#f5a623" font-weight="bold">?</text></svg>
+                <span class="ps-ip">***.***.*.<b>103</b></span>
+              </div>
+              <span class="ps-badge" data-i18n="mock_badge">Suspicious</span>
+            </div>
+            <div><span class="ps-ports">Ports: 8080, 9001</span></div>
+            <ul class="ps-findings">
+              <li data-i18n="mock_f1">Open camera HTTP ports</li>
+              <li data-i18n="mock_f2">Open DVR/NVR ports</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section">
+  <div class="section-label" data-i18n="feat_label">Features</div>
+  <h2 data-i18n="feat_h2">Everything you need to travel safely</h2>
+  <p class="section-sub" data-i18n="feat_sub">Multiple detection layers to identify hidden surveillance devices.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#c8b85a" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10"/><path d="M12 6v2M12 16v2M6 12H4M20 12h-2"/></svg>
+      </div>
+      <h3 data-i18n="f1_title">Network Scanner</h3>
+      <p data-i18n="f1_desc">Scans all devices on the Wi-Fi network and flags IP addresses with ports typical of IP cameras, DVRs, and NVRs.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#c8b85a" stroke-width="1.6" stroke-linecap="round"><path d="M8 6c0-2.2 1.8-4 4-4s4 1.8 4 4v6c0 2.2-1.8 4-4 4s-4-1.8-4-4V6z"/><path d="M12 18v4M8 22h8"/><path d="M5 10a7 7 0 0 0 14 0"/></svg>
+      </div>
+      <h3 data-i18n="f2_title">Magnetic Detector</h3>
+      <p data-i18n="f2_desc">Uses the phone's magnetometer to detect anomalous magnetic fields caused by hidden camera lenses or electronics.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#c8b85a" stroke-width="1.6" stroke-linecap="round"><path d="M6.5 6.5a6 6 0 0 0 0 11M17.5 6.5a6 6 0 0 1 0 11"/><path d="M3 3l18 18"/><circle cx="12" cy="12" r="2"/></svg>
+      </div>
+      <h3 data-i18n="f3_title">Bluetooth Scanner</h3>
+      <p data-i18n="f3_desc">Lists nearby Bluetooth devices and highlights suspicious names associated with known spy cameras.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#c8b85a" stroke-width="1.6" stroke-linecap="round"><path d="M12 2a5 5 0 0 1 5 5v3a5 5 0 0 1-10 0V7a5 5 0 0 1 5-5z"/><circle cx="12" cy="7" r="2"/><path d="M9 21v-1a3 3 0 0 1 6 0v1"/></svg>
+      </div>
+      <h3 data-i18n="f4_title">Camera Analysis</h3>
+      <p data-i18n="f4_desc">Helps identify suspicious lenses using the device camera with infrared reflection detection.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" style="padding-top:0;">
+  <div class="section-label" data-i18n="how_label">How it works</div>
+  <h2 data-i18n="how_h2">Three steps to sleep soundly</h2>
+  <p class="section-sub" data-i18n="how_sub">Simple and fast. Do it before unpacking your bags.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3 data-i18n="s1_title">Connect to Wi-Fi</h3>
+      <p data-i18n="s1_desc">Open SafeStay while already connected to the hotel or accommodation's network.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3 data-i18n="s2_title">Start the scan</h3>
+      <p data-i18n="s2_desc">The app scans the network, sensors, and Bluetooth simultaneously in seconds.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3 data-i18n="s3_title">Investigate alerts</h3>
+      <p data-i18n="s3_desc">Any suspicious device is highlighted with details about open ports and threat type.</p>
+    </div>
+  </div>
+</section>
+
+<!-- BANNER CTA -->
+<div class="banner">
+  <div class="banner-inner">
+    <h2 data-i18n="cta_h2">Start using SafeStay today</h2>
+    <p data-i18n="cta_p">Free. No sign-up. Works offline.</p>
+    <a href="https://play.google.com/store/apps/details?id=com.grichter.safestay&pcampaignid=web_share" class="btn-primary" style="font-size:1rem;padding:14px 32px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.76c.37.2.8.22 1.18.04L16.72 12 4.36.2C3.98.02 3.55.04 3.18.24 2.47.65 2 1.44 2 2.37v19.26c0 .93.47 1.72 1.18 2.13z"/></svg>
+      <span data-i18n="cta_btn">Download on Google Play</span>
+    </a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-logo">SafeStay</span>
+  <span data-i18n="footer_copy">© 2026 SafeStay. All rights reserved.</span>
+  <div style="display:flex;gap:20px;">
+    <a href="README.md" data-i18n="btn_privacy">Privacy Policy</a>
+    <a href="mailto:grichterdev@gmail.com" data-i18n="footer_contact">Contact</a>
+  </div>
+</footer>
+
+<script>
+  const T = {
+    en: {
+      nav_cta:      "Download free",
+      hero_eyebrow: "Security in accommodations",
+      hero_h1:      'Detect <span>hidden cameras</span> before you relax',
+      hero_p:       "SafeStay scans the Wi-Fi network, magnetic sensors, and Bluetooth to identify suspicious devices in hotels and short-term rentals.",
+      btn_play:     "Google Play",
+      btn_privacy:  "Privacy Policy",
+      mock_stats:   "1 suspicious · 8 total",
+      mock_badge:   "Suspicious",
+      mock_f1:      "Open camera HTTP ports",
+      mock_f2:      "Open DVR/NVR ports",
+      feat_label:   "Features",
+      feat_h2:      "Everything you need to travel safely",
+      feat_sub:     "Multiple detection layers to identify hidden surveillance devices.",
+      f1_title:     "Network Scanner",
+      f1_desc:      "Scans all devices on the Wi-Fi network and flags IP addresses with ports typical of IP cameras, DVRs, and NVRs.",
+      f2_title:     "Magnetic Detector",
+      f2_desc:      "Uses the phone's magnetometer to detect anomalous magnetic fields caused by hidden camera lenses or electronics.",
+      f3_title:     "Bluetooth Scanner",
+      f3_desc:      "Lists nearby Bluetooth devices and highlights suspicious names associated with known spy cameras.",
+      f4_title:     "Camera Analysis",
+      f4_desc:      "Helps identify suspicious lenses using the device camera with infrared reflection detection.",
+      how_label:    "How it works",
+      how_h2:       "Three steps to sleep soundly",
+      how_sub:      "Simple and fast. Do it before unpacking your bags.",
+      s1_title:     "Connect to Wi-Fi",
+      s1_desc:      "Open SafeStay while already connected to the hotel or accommodation's network.",
+      s2_title:     "Start the scan",
+      s2_desc:      "The app scans the network, sensors, and Bluetooth simultaneously in seconds.",
+      s3_title:     "Investigate alerts",
+      s3_desc:      "Any suspicious device is highlighted with details about open ports and threat type.",
+      cta_h2:       "Start using SafeStay today",
+      cta_p:        "Free. No sign-up. Works offline.",
+      cta_btn:      "Download on Google Play",
+      footer_copy:  "© 2026 SafeStay. All rights reserved.",
+      footer_contact: "Contact",
+    },
+    pt: {
+      nav_cta:      "Baixar grátis",
+      hero_eyebrow: "Segurança em acomodações",
+      hero_h1:      'Detecte <span>câmeras ocultas</span> antes de relaxar',
+      hero_p:       "SafeStay varre a rede Wi-Fi, sensores magnéticos e Bluetooth para identificar dispositivos suspeitos em hotéis e aluguéis por temporada.",
+      btn_play:     "Google Play",
+      btn_privacy:  "Política de Privacidade",
+      mock_stats:   "1 suspeito · 8 total",
+      mock_badge:   "Suspeito",
+      mock_f1:      "Portas HTTP de câmera abertas",
+      mock_f2:      "Portas de DVR/NVR abertas",
+      feat_label:   "Funcionalidades",
+      feat_h2:      "Tudo que você precisa para viajar seguro",
+      feat_sub:     "Múltiplas camadas de detecção para identificar dispositivos de vigilância ocultos.",
+      f1_title:     "Scanner de Rede",
+      f1_desc:      "Varre todos os dispositivos na rede Wi-Fi e sinaliza endereços IP com portas características de câmeras IP, DVR e NVR.",
+      f2_title:     "Detector Magnético",
+      f2_desc:      "Usa o magnetômetro do celular para detectar campos magnéticos anômalos causados por lentes de câmera ou eletrônicos escondidos.",
+      f3_title:     "Scanner Bluetooth",
+      f3_desc:      "Lista dispositivos Bluetooth nas proximidades e destaca nomes suspeitos associados a câmeras espiãs conhecidas.",
+      f4_title:     "Análise de Câmera",
+      f4_desc:      "Auxilia na identificação visual de lentes suspeitas usando a câmera do dispositivo com detecção de reflexo infravermelho.",
+      how_label:    "Como funciona",
+      how_h2:       "Três passos para dormir tranquilo",
+      how_sub:      "Processo simples e rápido. Faça antes de desacomodar as malas.",
+      s1_title:     "Conecte ao Wi-Fi",
+      s1_desc:      "Abra o SafeStay já conectado à rede do hotel ou acomodação.",
+      s2_title:     "Inicie o scan",
+      s2_desc:      "O app varre a rede, sensores e Bluetooth simultaneamente em poucos segundos.",
+      s3_title:     "Investigue alertas",
+      s3_desc:      "Qualquer dispositivo suspeito é destacado com detalhes sobre portas e tipo de ameaça.",
+      cta_h2:       "Comece a usar o SafeStay hoje",
+      cta_p:        "Gratuito. Sem cadastro. Funciona offline.",
+      cta_btn:      "Baixar no Google Play",
+      footer_copy:  "© 2026 SafeStay. Todos os direitos reservados.",
+      footer_contact: "Contato",
+    },
+    es: {
+      nav_cta:      "Descargar gratis",
+      hero_eyebrow: "Seguridad en alojamientos",
+      hero_h1:      'Detecta <span>cámaras ocultas</span> antes de relajarte',
+      hero_p:       "SafeStay escanea la red Wi-Fi, sensores magnéticos y Bluetooth para identificar dispositivos sospechosos en hoteles y alquileres temporales.",
+      btn_play:     "Google Play",
+      btn_privacy:  "Política de Privacidad",
+      mock_stats:   "1 sospechoso · 8 total",
+      mock_badge:   "Sospechoso",
+      mock_f1:      "Puertos HTTP de cámara abiertos",
+      mock_f2:      "Puertos DVR/NVR abiertos",
+      feat_label:   "Funciones",
+      feat_h2:      "Todo lo que necesitas para viajar seguro",
+      feat_sub:     "Múltiples capas de detección para identificar dispositivos de vigilancia ocultos.",
+      f1_title:     "Escáner de Red",
+      f1_desc:      "Escanea todos los dispositivos en la red Wi-Fi y marca direcciones IP con puertos típicos de cámaras IP, DVR y NVR.",
+      f2_title:     "Detector Magnético",
+      f2_desc:      "Usa el magnetómetro del teléfono para detectar campos magnéticos anómalos causados por lentes de cámara ocultas.",
+      f3_title:     "Escáner Bluetooth",
+      f3_desc:      "Lista dispositivos Bluetooth cercanos y destaca nombres sospechosos asociados a cámaras espía conocidas.",
+      f4_title:     "Análisis de Cámara",
+      f4_desc:      "Ayuda a identificar lentes sospechosas usando la cámara del dispositivo con detección de reflexión infrarroja.",
+      how_label:    "Cómo funciona",
+      how_h2:       "Tres pasos para dormir tranquilo",
+      how_sub:      "Simple y rápido. Hazlo antes de deshacer las maletas.",
+      s1_title:     "Conéctate al Wi-Fi",
+      s1_desc:      "Abre SafeStay ya conectado a la red del hotel o alojamiento.",
+      s2_title:     "Inicia el escaneo",
+      s2_desc:      "La app escanea la red, sensores y Bluetooth simultáneamente en segundos.",
+      s3_title:     "Investiga las alertas",
+      s3_desc:      "Cualquier dispositivo sospechoso se resalta con detalles sobre puertos abiertos y tipo de amenaza.",
+      cta_h2:       "Empieza a usar SafeStay hoy",
+      cta_p:        "Gratis. Sin registro. Funciona sin conexión.",
+      cta_btn:      "Descargar en Google Play",
+      footer_copy:  "© 2026 SafeStay. Todos los derechos reservados.",
+      footer_contact: "Contacto",
+    }
+  };
+
+  function detectLang() {
+    const saved = localStorage.getItem('safestay_lang');
+    if (saved && T[saved]) return saved;
+    const nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+    if (nav.startsWith('pt')) return 'pt';
+    if (nav.startsWith('es')) return 'es';
+    return 'en';
+  }
+
+  function setLang(lang) {
+    if (!T[lang]) return;
+    localStorage.setItem('safestay_lang', lang);
+    applyLang(lang);
+  }
+
+  function applyLang(lang) {
+    const strings = T[lang];
+    document.documentElement.lang = lang === 'pt' ? 'pt-BR' : lang;
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (strings[key] !== undefined) el.textContent = strings[key];
+    });
+
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const key = el.getAttribute('data-i18n-html');
+      if (strings[key] !== undefined) el.innerHTML = strings[key];
+    });
+
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.textContent.toLowerCase() === lang);
+    });
+  }
+
+  applyLang(detectLang());
+</script>
+</body>
+</html>
